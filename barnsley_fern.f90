@@ -136,8 +136,8 @@ program barnsley_fern_gtk
     
     ! main window
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL)
-    call gtk_window_set_default_size(window, 820, 1000)
-    call gtk_window_set_title(window, "Paproc in GTK3"//c_null_char)
+    call gtk_window_set_default_size(window, 720, 720)
+    call gtk_window_set_title(window, "Barnsley fern in GTK-3"//c_null_char)
     call g_signal_connect(window, "delete-event"//c_null_char, c_funloc(delete_event))
 
     ! sain buttons
@@ -159,7 +159,7 @@ program barnsley_fern_gtk
                     
     ! spin button to set a scale parameter
     label_scale = gtk_label_new("Scale parameter:"//c_null_char)
-    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(75d0, 5d0, 200d0, 5d0,&
+    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 200d0, 5d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
                     
     ! creta grid for buttons and fields
@@ -252,8 +252,8 @@ program barnsley_fern_gtk
     call gtk_widget_show_all(window)
   
     ! define the size of drawing area
-    pixwidth = 800
-    pixheight = 800
+    pixwidth = 700
+    pixheight = 520
     pixbuf_area = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8_c_int, pixwidth, pixheight)
     nch = gdk_pixbuf_get_n_channels(pixbuf_area)
     rowstride = gdk_pixbuf_get_rowstride(pixbuf_area)
