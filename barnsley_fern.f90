@@ -29,7 +29,9 @@ module handlers
                    gtk_spin_button_new, gtk_drawing_area_new, gtk_main_quit,&
                    gtk_widget_set_vexpand, gtk_widget_queue_draw, gtk_notebook_new,&
                    gtk_notebook_append_page, gtk_label_new_with_mnemonic,&
-                   gtk_spin_button_get_value,&
+                   gtk_spin_button_get_value, gtk_window_set_resizable,&
+                   gtk_radio_button_new_with_label, gtk_radio_button_get_group,&
+                   gtk_toggle_button_set_active, &
                    g_signal_connect,&
                    GTK_WINDOW_TOPLEVEL,&
                    GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL,&
@@ -117,7 +119,7 @@ end module handlers
 !*************************************************
 program barnsley_fern_gtk
 
-    use, intrinsic ::   iso_c_binding, only: c_ptr, c_char, c_funloc, c_f_pointer,&
+    use, intrinsic ::   iso_c_binding, only: c_ptr, c_char, c_null_ptr, c_funloc, c_f_pointer,&
                         c_int, dp => c_double
 
     use handlers
@@ -130,7 +132,8 @@ program barnsley_fern_gtk
     type(c_ptr) :: table
     type(c_ptr) :: box_main, box_btn, box_draw
     type(c_ptr) :: btn_start, btn_save, btn_clean, btn_quit
-    type(c_ptr) :: label_iter, label_scale
+    type(c_ptr) :: label_iter, label_scale, label_radio
+    type(c_ptr) :: radio_1, radio_2, radio_group, radio_box
 
     call gtk_init()
     
@@ -138,6 +141,7 @@ program barnsley_fern_gtk
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL)
     call gtk_window_set_default_size(window, 720, 720)
     call gtk_window_set_title(window, "Barnsley fern in GTK-3"//c_null_char)
+    call gtk_window_set_resizable(window, FALSE)
     call g_signal_connect(window, "delete-event"//c_null_char, c_funloc(delete_event))
 
     ! sain buttons
@@ -162,6 +166,13 @@ program barnsley_fern_gtk
     spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 200d0, 5d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
                     
+    ! creat radio buttons
+    radio_1 = gtk_radio_button_new_with_label(radio_group, "Barnsley fern"//c_null_char)
+    radio_group = gtk_radio_button_get_group(radio_1)
+    radio_2 = gtk_radio_button_new_with_label(radio_group, "Cyclosorus fern"//c_null_char)    
+    call gtk_toggle_button_set_active(radio_1, TRUE)
+    label_radio = gtk_label_new("Calculations parameters:"//c_null_char)
+    
     ! creta grid for buttons and fields
     table = gtk_grid_new()
     call gtk_grid_set_column_homogeneous(table, TRUE)
@@ -171,6 +182,9 @@ program barnsley_fern_gtk
     call gtk_grid_attach(table, spin_btn_iter, 1_c_int, 0_c_int, 1_c_int, 1_c_int)
     call gtk_grid_attach(table, label_scale, 0_c_int, 1_c_int, 1_c_int, 1_c_int)
     call gtk_grid_attach(table, spin_btn_scale, 1_c_int, 1_c_int, 1_c_int, 1_c_int)
+    call gtk_grid_attach(table, label_radio, 0_c_int, 2_c_int, 1_c_int, 2_c_int)
+    call gtk_grid_attach(table, radio_1, 1_c_int, 2_c_int, 1_c_int, 1_c_int)
+    call gtk_grid_attach(table, radio_2, 1_c_int, 3_c_int, 1_c_int, 1_c_int)
     call gtk_grid_attach(table, btn_start, 2_c_int, 0_c_int, 1_c_int, 1_c_int)
     call gtk_grid_attach(table, btn_clean, 2_c_int, 1_c_int, 1_c_int, 1_c_int)
     call gtk_grid_attach(table, btn_save, 2_c_int, 2_c_int, 1_c_int, 1_c_int)
@@ -218,7 +232,22 @@ program barnsley_fern_gtk
     call gtk_widget_set_margin_top(label_scale, 4_c_int)
     call gtk_widget_set_margin_bottom(label_scale, 4_c_int)
     
+    call gtk_widget_set_margin_start(label_radio, 4_c_int)
+    call gtk_widget_set_margin_end(label_radio, 4_c_int)
+    call gtk_widget_set_margin_top(label_radio, 4_c_int)
+    call gtk_widget_set_margin_bottom(label_radio, 4_c_int)
     
+    ! adjust margins of radio buttons
+    call gtk_widget_set_margin_start(radio_1, 4_c_int)
+    call gtk_widget_set_margin_end(radio_1, 4_c_int)
+    call gtk_widget_set_margin_top(radio_1, 4_c_int)
+    call gtk_widget_set_margin_bottom(radio_1, 4_c_int)
+    
+    call gtk_widget_set_margin_start(radio_2, 4_c_int)
+    call gtk_widget_set_margin_end(radio_2, 4_c_int)
+    call gtk_widget_set_margin_top(radio_2, 4_c_int)
+    call gtk_widget_set_margin_bottom(radio_2, 4_c_int)
+
     ! create boxes
     box_main = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4_c_int)
     box_btn = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4_c_int)
@@ -298,7 +327,7 @@ subroutine fern(n, sc)
     !double precision, parameter :: yo = 780
     !double precision, parameter :: sc = 75.0
     
-      ! transformatio factors
+    ! transformatio factors
     xt(1, [1,2,3]) = [0.00, 0.00, 0.0]
     xt(2, [1,2,3]) = [0.85, 0.04, 0.0]
     xt(3, [1,2,3]) = [0.20, -0.26, 0.0]
