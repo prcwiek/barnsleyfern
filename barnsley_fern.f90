@@ -13,6 +13,8 @@ module global_widgets
     type(c_ptr) :: draw_area
     type(c_ptr) :: pixbuf_area
     type(c_ptr) :: spin_btn_iter, spin_btn_scale
+    type(c_ptr) :: radio_1, radio_2
+    
     
 end module global_widgets
 
@@ -31,7 +33,8 @@ module handlers
                    gtk_notebook_append_page, gtk_label_new_with_mnemonic,&
                    gtk_spin_button_get_value, gtk_window_set_resizable,&
                    gtk_radio_button_new_with_label, gtk_radio_button_get_group,&
-                   gtk_toggle_button_set_active, &
+                   gtk_toggle_button_set_active, gtk_toggle_button_get_active,&
+                   gtk_spin_button_set_value,&
                    g_signal_connect,&
                    GTK_WINDOW_TOPLEVEL,&
                    GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL,&
@@ -111,6 +114,35 @@ contains
         
         res = FALSE
     end function clean_draw_area
+    
+    function radio_1_selected(widget, gdata) result(res) bind(c)
+        use, intrinsic :: iso_c_binding, only : c_ptr
+        use global_widgets
+        
+        implicit none
+        
+        type(c_ptr), value :: widget, gdata
+        integer(c_int) :: res
+        
+        call gtk_spin_button_set_value(spin_btn_scale, 50d0)
+
+        res = FALSE
+    end function radio_1_selected        
+        
+    function radio_2_selected(widget, gdata) result(res) bind(c)
+        use, intrinsic :: iso_c_binding, only : c_ptr
+        use global_widgets
+        
+        implicit none
+        
+        type(c_ptr), value :: widget, gdata
+        integer(c_int) :: res
+        
+        call gtk_spin_button_set_value(spin_btn_scale, 60d0)
+
+        res = FALSE
+    end function radio_2_selected        
+        
         
 end module handlers
 
@@ -133,7 +165,7 @@ program barnsley_fern_gtk
     type(c_ptr) :: box_main, box_btn, box_draw
     type(c_ptr) :: btn_start, btn_save, btn_clean, btn_quit
     type(c_ptr) :: label_iter, label_scale, label_radio
-    type(c_ptr) :: radio_1, radio_2, radio_group, radio_box
+    type(c_ptr) :: radio_group
 
     call gtk_init()
     
@@ -158,18 +190,20 @@ program barnsley_fern_gtk
     
     ! spin button to set a nmber of iterations
     label_iter = gtk_label_new("Number of iterations:"//c_null_char)
-    spin_btn_iter = gtk_spin_button_new(gtk_adjustment_new(10000d0, 500d0, 200000d0, 500d0,&
+    spin_btn_iter = gtk_spin_button_new(gtk_adjustment_new(10000d0, 5000d0, 20000000d0, 500d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
                     
     ! spin button to set a scale parameter
     label_scale = gtk_label_new("Scale parameter:"//c_null_char)
-    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 200d0, 5d0,&
+    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 2000d0, 5d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
                     
     ! creat radio buttons
     radio_1 = gtk_radio_button_new_with_label(radio_group, "Barnsley fern"//c_null_char)
+    call g_signal_connect(radio_1, "clicked"//c_null_char, c_funloc(radio_1_selected))
     radio_group = gtk_radio_button_get_group(radio_1)
-    radio_2 = gtk_radio_button_new_with_label(radio_group, "Cyclosorus fern"//c_null_char)    
+    radio_2 = gtk_radio_button_new_with_label(radio_group, "Thelypteridaceae fern"//c_null_char)    
+    call g_signal_connect(radio_2, "clicked"//c_null_char, c_funloc(radio_2_selected))
     call gtk_toggle_button_set_active(radio_1, TRUE)
     label_radio = gtk_label_new("Calculations parameters:"//c_null_char)
     
@@ -314,45 +348,64 @@ subroutine fern(n, sc)
     ! transformation factors
     double precision, dimension(1:4, 1:6) :: xt, yt
     ! probability factors
-    double precision, dimension(1:4) :: pp = [0.02, 0.86, 0.93, 0.07]
+    double precision, dimension(1:4) :: pp 
     double precision :: x0, y0, x, y, r
     
     integer :: s                ! transformation number
     integer :: i, p
     
-    ! center of coordinate system and scale
-    ! and set the origin of the drawing
-    !double precision, parameter :: xo = 400
+    ! center of coordinate system 
     double precision :: xo, yo
-    !double precision, parameter :: yo = 780
-    !double precision, parameter :: sc = 75.0
-    
-    ! transformatio factors
-    xt(1, [1,2,3]) = [0.00, 0.00, 0.0]
-    xt(2, [1,2,3]) = [0.85, 0.04, 0.0]
-    xt(3, [1,2,3]) = [0.20, -0.26, 0.0]
-    xt(4, [1,2,3]) = [-0.15, 0.28, 0.0]
-    
-    yt(1, [1,2,3]) = [0.0, 0.16, 0.0]
-    yt(2, [1,2,3]) = [-0.04, 0.85, 1.6]
-    yt(3, [1,2,3]) = [0.23, 0.22, 1.6]
-    yt(4, [1,2,3]) = [0.26, 0.24, 0.44]
 
-    x0 = 2.0
-    y0 = 2.0
+    ! transformatio factors    
+    if (gtk_toggle_button_get_active(radio_1) == TRUE) then
+        xt(1, [1,2,3]) = [0.00, 0.00, 0.0]
+        xt(2, [1,2,3]) = [0.85, 0.04, 0.0]
+        xt(3, [1,2,3]) = [0.20, -0.26, 0.0]
+        xt(4, [1,2,3]) = [-0.15, 0.28, 0.0]
+        
+        yt(1, [1,2,3]) = [0.0, 0.16, 0.0]
+        yt(2, [1,2,3]) = [-0.04, 0.85, 1.6]
+        yt(3, [1,2,3]) = [0.23, 0.22, 1.6]
+        yt(4, [1,2,3]) = [0.26, 0.24, 0.44]
+
+        pp = [0.02, 0.86, 0.93, 1.0]
+        
+        x0 = 2.0
+        y0 = 2.0
+        
+        xo = 0.5 * pixwidth
+        yo = 0.975 * pixheight
+    else if (gtk_toggle_button_get_active(radio_2) == TRUE) then
+        xt(1, [1,2,3]) = [0.00, 0.00, 0.0]
+        xt(2, [1,2,3]) = [0.035, -0.2, -0.09]
+        xt(3, [1,2,3]) = [0.95, 0.005, -0.002]
+        xt(4, [1,2,3]) = [-0.03, 0.2, 0.083]
+        
+        yt(1, [1,2,3]) = [0.0, 0.25, -0.4]
+        yt(2, [1,2,3]) = [0.16, 0.04, 0.02]
+        yt(3, [1,2,3]) = [-0.005, 0.93, 0.5]
+        yt(4, [1,2,3]) = [0.16, 0.04, 0.12]
+        
+        pp = [0.02, 0.07, 0.84, 1.0]
+        
+        x0 = 1.0
+        y0 = 1.0
+        
+        xo = 0.5 * pixwidth
+        yo = 0.925 * pixheight
+    end if
     
-    xo = 0.5 * pixwidth
-    yo = 0.975 * pixheight
     
     do i = 1, n
         call random_number(r)
         
         ! select transformation
-        if (r < pp(1)) then
+        if (r <= pp(1)) then
             s = 1
-        else if (r < pp(2)) then
+        else if (r <= pp(2)) then
             s = 2
-        else if (r < pp(3)) then
+        else if (r <= pp(3)) then
             s = 3
         else
             s = 4
