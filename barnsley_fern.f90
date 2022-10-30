@@ -204,22 +204,25 @@ program barnsley_fern_gtk
     
     btn_save = gtk_button_new_with_label("Save"//c_null_char)
     call g_signal_connect(btn_save, "clicked"//c_null_char, c_funloc(save_draw_area))
-        
+    
     btn_quit = gtk_button_new_with_label("Quit"//c_null_char)
+    !print*, "before"
     call g_signal_connect(btn_quit, "clicked"//c_null_char, c_funloc(delete_event))
     
     ! spin button to set a nmber of iterations
     label_iter = gtk_label_new("Number of iterations:"//c_null_char)
     spin_btn_iter = gtk_spin_button_new(gtk_adjustment_new(10000d0, 5000d0, 20000000d0, 500d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
-                    
+
     ! spin button to set a scale parameter
     label_scale = gtk_label_new("Scale parameter:"//c_null_char)
     spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 2000d0, 5d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
-                    
+
     ! creat radio buttons
+    radio_group = c_null_ptr
     radio_1 = gtk_radio_button_new_with_label(radio_group, "Barnsley fern"//c_null_char)
+  
     call g_signal_connect(radio_1, "clicked"//c_null_char, c_funloc(radio_1_selected))
     radio_group = gtk_radio_button_get_group(radio_1)
     radio_2 = gtk_radio_button_new_with_label(radio_group, "Thelypteridaceae fern"//c_null_char)    
