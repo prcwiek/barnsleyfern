@@ -7,7 +7,7 @@ module global_widgets
     use, intrinsic :: iso_c_binding, only: c_ptr, c_char, c_int
     
     !integer(c_int) :: nch, rowstride, pixwidth, pixheight     
-    integer :: nch, rowstride, pixwidth, pixheight 
+    integer(c_int) :: nch, rowstride, pixwidth, pixheight 
     character(c_char), dimension(:), pointer :: pixel
     
     type(c_ptr) :: draw_area
@@ -38,12 +38,14 @@ module handlers
                    g_signal_connect,&
                    GTK_WINDOW_TOPLEVEL,&
                    GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL,&
-                   GDK_COLORSPACE_RGB, c_null_char, TRUE, FALSE
+                   GDK_COLORSPACE_RGB, c_null_char, c_null_ptr, TRUE, FALSE
     
     use gdk_pixbuf, only: gdk_pixbuf_get_n_channels, gdk_pixbuf_get_pixels, &
                           gdk_pixbuf_get_rowstride, gdk_pixbuf_new
     
     use gdk, only : gdk_cairo_set_source_pixbuf
+    
+    use gtk_os_dependent, only: gdk_pixbuf_savev
     
     use cairo, only: cairo_paint, cairo_set_source, cairo_surface_write_to_png,&
                      cairo_surface_destroy
@@ -63,7 +65,7 @@ contains
     end function delete_event
     
     function draw(widget, my_cairo_context, gdata) result(res) bind(c)
-        use, intrinsic :: iso_c_binding, only: c_int, c_ptr
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
         use global_widgets
 
         implicit none
@@ -78,7 +80,7 @@ contains
     end function draw
 
     recursive function start_calculations(widget, gdata) result(res) bind(c)
-        use, intrinsic :: iso_c_binding, only : c_ptr
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
         use global_widgets
         
         implicit none
@@ -100,7 +102,7 @@ contains
     end function start_calculations
     
     function clean_draw_area(widget, gdata) result(res) bind(c)
-        use, intrinsic :: iso_c_binding, only : c_ptr
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
         use global_widgets
         
         implicit none
@@ -114,6 +116,23 @@ contains
         
         res = FALSE
     end function clean_draw_area
+        
+    function save_draw_area(widget, gdata) result(res) bind(c)
+        use, intrinsic :: iso_c_binding, only : c_ptr, c_int
+        use global_widgets
+        
+        implicit none
+        
+        type(c_ptr), value :: widget, gdata
+        integer(c_int) :: res
+        
+        integer(c_int) :: cstatus
+        
+        cstatus = gdk_pixbuf_savev(pixbuf_area, "fern.png"//c_null_char, "png"//c_null_char,&
+                  c_null_ptr, c_null_ptr, c_null_ptr)
+        
+        res = FALSE
+    end function save_draw_area
     
     function radio_1_selected(widget, gdata) result(res) bind(c)
         use, intrinsic :: iso_c_binding, only : c_ptr
@@ -151,7 +170,7 @@ end module handlers
 !*************************************************
 program barnsley_fern_gtk
 
-    use, intrinsic ::   iso_c_binding, only: c_ptr, c_char, c_null_ptr, c_funloc, c_f_pointer,&
+    use, intrinsic ::   iso_c_binding, only: c_ptr, c_char, c_funloc, c_f_pointer,&
                         c_int, dp => c_double
 
     use handlers
@@ -176,7 +195,7 @@ program barnsley_fern_gtk
     call gtk_window_set_resizable(window, FALSE)
     call g_signal_connect(window, "delete-event"//c_null_char, c_funloc(delete_event))
 
-    ! sain buttons
+    ! main buttons
     btn_start = gtk_button_new_with_label("Start"//c_null_char)
     call g_signal_connect(btn_start, "clicked"//c_null_char, c_funloc(start_calculations))
 
@@ -184,6 +203,7 @@ program barnsley_fern_gtk
     call g_signal_connect(btn_clean, "clicked"//c_null_char, c_funloc(clean_draw_area))
     
     btn_save = gtk_button_new_with_label("Save"//c_null_char)
+    call g_signal_connect(btn_save, "clicked"//c_null_char, c_funloc(save_draw_area))
         
     btn_quit = gtk_button_new_with_label("Quit"//c_null_char)
     call g_signal_connect(btn_quit, "clicked"//c_null_char, c_funloc(delete_event))
