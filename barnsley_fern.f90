@@ -14,7 +14,7 @@ module global_widgets
     type(c_ptr) :: pixbuf_area
     type(c_ptr) :: spin_btn_iter, spin_btn_scale
     type(c_ptr) :: radio_1, radio_2
-    
+    type(c_ptr) :: status_bar
     
 end module global_widgets
 
@@ -34,7 +34,8 @@ module handlers
                    gtk_spin_button_get_value, gtk_window_set_resizable,&
                    gtk_radio_button_new_with_label, gtk_radio_button_get_group,&
                    gtk_toggle_button_set_active, gtk_toggle_button_get_active,&
-                   gtk_spin_button_set_value,&
+                   gtk_spin_button_set_value, gtk_statusbar_new,&
+                   gtk_statusbar_push, gtk_statusbar_get_context_id,&
                    g_signal_connect,&
                    GTK_WINDOW_TOPLEVEL,&
                    GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL,&
@@ -87,17 +88,21 @@ contains
         
         integer :: niter
         real :: sc
-        integer(c_int) :: res
+        integer(c_int) :: res, message_status
         type(c_ptr), value :: widget, gdata
         
         ! get number of iterations
         niter = INT(gtk_spin_button_get_value(spin_btn_iter))
         sc = INT(gtk_spin_button_get_value(spin_btn_scale))
         
+        message_status = gtk_statusbar_push(status_bar, gtk_statusbar_get_context_id(status_bar,&
+                            "BarnsleyFern"//c_null_char), "Running..."//c_null_char)
         call fern(niter, sc)
         
         call gtk_widget_queue_draw(draw_area)
         
+        message_status = gtk_statusbar_push(status_bar, gtk_statusbar_get_context_id(status_bar,&
+                            "BarnsleyFern"//c_null_char), "Ready"//c_null_char)
         res = FALSE
     end function start_calculations
     
@@ -185,12 +190,14 @@ program barnsley_fern_gtk
     type(c_ptr) :: btn_start, btn_save, btn_clean, btn_quit
     type(c_ptr) :: label_iter, label_scale, label_radio
     type(c_ptr) :: radio_group
+    
+    integer(c_int) :: message_status
 
     call gtk_init()
     
     ! main window
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL)
-    call gtk_window_set_default_size(window, 720, 720)
+    call gtk_window_set_default_size(window, 720, 760)
     call gtk_window_set_title(window, "Barnsley fern in GTK-3"//c_null_char)
     call gtk_window_set_resizable(window, FALSE)
     call g_signal_connect(window, "delete-event"//c_null_char, c_funloc(delete_event))
@@ -211,7 +218,7 @@ program barnsley_fern_gtk
     
     ! spin button to set a nmber of iterations
     label_iter = gtk_label_new("Number of iterations:"//c_null_char)
-    spin_btn_iter = gtk_spin_button_new(gtk_adjustment_new(10000d0, 5000d0, 20000000d0, 500d0,&
+    spin_btn_iter = gtk_spin_button_new(gtk_adjustment_new(10000d0, 5000d0, 200000000d0, 500d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
 
     ! spin button to set a scale parameter
@@ -329,8 +336,18 @@ program barnsley_fern_gtk
     call gtk_widget_set_vexpand(draw_area, TRUE)
     call gtk_container_add(box_draw, draw_area)
     
+    ! create status bar
+    status_bar = gtk_statusbar_new()
+    message_status = gtk_statusbar_push(status_bar, gtk_statusbar_get_context_id(status_bar,&
+                                "BarnsleyFern"//c_null_char), "Ready"//c_null_char)
+    call gtk_widget_set_margin_start(status_bar, 10_c_int)
+    call gtk_widget_set_margin_end(status_bar, 10_c_int)
+    call gtk_widget_set_margin_top(status_bar, 5_c_int)
+    call gtk_widget_set_margin_bottom(status_bar, 10_c_int)
+    
     call gtk_container_add(box_main, box_btn)
     call gtk_container_add(box_main, box_draw)
+    call gtk_container_add(box_main, status_bar)
     call gtk_widget_set_vexpand(box_main, TRUE)
     
     call gtk_container_add(window, box_main)
