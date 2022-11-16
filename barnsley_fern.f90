@@ -147,7 +147,7 @@ contains
         type(c_ptr), value :: widget, gdata
         integer(c_int) :: res
         
-        call gtk_spin_button_set_value(spin_btn_scale, 50d0)
+        call gtk_spin_button_set_value(spin_btn_scale, 45d0)
 
         res = FALSE
     end function radio_1_selected        
@@ -196,7 +196,7 @@ program barnsley_fern_gtk
     
     ! main window
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL)
-    call gtk_window_set_default_size(window, 720, 760)
+    call gtk_window_set_default_size(window, 720, 740)
     call gtk_window_set_title(window, "Barnsley fern in GTK-3"//c_null_char)
     call gtk_window_set_resizable(window, FALSE)
     call g_signal_connect(window, "delete-event"//c_null_char, c_funloc(delete_event))
@@ -222,7 +222,7 @@ program barnsley_fern_gtk
 
     ! spin button to set a scale parameter
     label_scale = gtk_label_new("Scale parameter:"//c_null_char)
-    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(50d0, 5d0, 2000d0, 5d0,&
+    spin_btn_scale = gtk_spin_button_new(gtk_adjustment_new(45d0, 5d0, 2000d0, 5d0,&
                     500d0,0d0), 0.05d0, 0_c_int)
 
     ! creat radio buttons
@@ -355,7 +355,7 @@ program barnsley_fern_gtk
   
     ! define the size of drawing area
     pixwidth = 700
-    pixheight = 520
+    pixheight = 500
     pixbuf_area = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8_c_int, pixwidth, pixheight)
     nch = gdk_pixbuf_get_n_channels(pixbuf_area)
     rowstride = gdk_pixbuf_get_rowstride(pixbuf_area)
