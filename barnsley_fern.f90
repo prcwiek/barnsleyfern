@@ -6,7 +6,6 @@ module global_widgets
 
     use, intrinsic :: iso_c_binding, only: c_ptr, c_char, c_int
     
-    !integer(c_int) :: nch, rowstride, pixwidth, pixheight     
     integer(c_int) :: nch, rowstride, pixwidth, pixheight 
     character(c_char), dimension(:), pointer :: pixel
     
