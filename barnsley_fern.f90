@@ -14,7 +14,8 @@ module global_widgets
     type(c_ptr) :: spin_btn_iter, spin_btn_scale
     type(c_ptr) :: radio_1, radio_2
     type(c_ptr) :: status_bar
-    
+    type(c_ptr) :: window
+        
 end module global_widgets
 
 module handlers
@@ -34,11 +35,14 @@ module handlers
                    gtk_radio_button_new_with_label, gtk_radio_button_get_group,&
                    gtk_toggle_button_set_active, gtk_toggle_button_get_active,&
                    gtk_spin_button_set_value, gtk_statusbar_new,&
+
                    gtk_statusbar_push, gtk_statusbar_get_context_id,&
+
                    g_signal_connect,&
                    GTK_WINDOW_TOPLEVEL,&
                    GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL,&
-                   GDK_COLORSPACE_RGB, c_null_char, c_null_ptr, TRUE, FALSE
+                   GDK_COLORSPACE_RGB,&
+                   c_null_char, c_null_ptr, TRUE, FALSE
     
     use gdk_pixbuf, only: gdk_pixbuf_get_n_channels, gdk_pixbuf_get_pixels, &
                           gdk_pixbuf_get_rowstride, gdk_pixbuf_new
@@ -49,6 +53,8 @@ module handlers
     
     use cairo, only: cairo_paint, cairo_set_source, cairo_surface_write_to_png,&
                      cairo_surface_destroy
+    
+    use gtk_hl_chooser_modified
                      
     implicit none
 
@@ -128,11 +134,36 @@ contains
         implicit none
         
         type(c_ptr), value :: widget, gdata
+        
         integer(c_int) :: res
-        
         integer(c_int) :: cstatus
+        integer(c_int) :: isel
+
+        character(len=120), dimension(:), allocatable :: chfile
+        character(len=30), dimension(1) :: filter
+        character(len=30), dimension(1) :: filter_name
+        character(len=240) :: filename
         
-        cstatus = gdk_pixbuf_savev(pixbuf_area, "fern.png"//c_null_char, "png"//c_null_char,&
+        
+        filter(1) = "*png"
+        filter_name(1) = "png files"
+        
+        isel = hl_gtk_file_chooser_show_modified(chfile, create=TRUE,&
+                title="Select output file"//c_null_char, filter=filter,&
+                filter_name=filter_name, initial_file=trim("barney_fern.png")//c_null_char,&
+                wsize=(/ 600_c_int, 400_c_int /), &
+                edit_filters=FALSE, confirm_overwrite=TRUE, all=FALSE,&
+                parent=window)
+        
+        if (isel == FALSE) then
+            res = FALSE
+            return
+        end if
+        
+        filename = chfile(1)
+        deallocate(chfile)
+        
+        cstatus = gdk_pixbuf_savev(pixbuf_area, trim(filename)//c_null_char, "png"//c_null_char,&
                   c_null_ptr, c_null_ptr, c_null_ptr)
         
         res = FALSE
@@ -183,7 +214,6 @@ program barnsley_fern_gtk
     
     implicit none
     
-    type(c_ptr) :: window
     type(c_ptr) :: table
     type(c_ptr) :: box_main, box_btn, box_draw
     type(c_ptr) :: btn_start, btn_save, btn_clean, btn_quit
