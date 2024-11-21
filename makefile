@@ -15,6 +15,6 @@ barnsley_fern:	barnsley_fern.f90 $(OBJS)
 
 %.o: %.mod
 
-PHONY: clean
+.PHONY: clean
 clean:
 	-rm -f *.o *.mod *.smod *.anc barnsley_fern
