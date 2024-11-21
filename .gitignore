@@ -37,3 +37,7 @@
 # pictures
 *.png
 
+# VSCodium
+**/.vscode/
+
+
